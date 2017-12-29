@@ -31,7 +31,10 @@ import com.google.firebase.storage.UploadTask;
 import java.util.UUID;
 
 import inc.droidflick.firebasetutorial.R;
+import inc.droidflick.firebasetutorial.interfaces.FireBaseChildCountCallInterface;
+import inc.droidflick.firebasetutorial.interfaces.FireBaseOnTaskComplete;
 import inc.droidflick.firebasetutorial.interfaces.FirebaseCallInterface;
+import inc.droidflick.firebasetutorial.interfaces.FirebaseUrlCallInterface;
 
 import java.util.*;
 
@@ -44,7 +47,10 @@ public class FireBaseHelper {
 
     Context context;
     FirebaseCallInterface firebaseCallInterface;
-
+    FireBaseChildCountCallInterface childCountCallInterface;
+    FirebaseUrlCallInterface firebaseUrlCallInterface;
+    FirebaseUrlCallInterface firebaseAudioUrlCallInterface;
+    FireBaseOnTaskComplete onTaskCompleteInterface;
     String imageUrl = "ic_default";
 
     public static int childCount = -1;
@@ -68,28 +74,27 @@ public class FireBaseHelper {
 
     public static Uri audioUri;
 
-    public static String imageDownloadUrl = null;
+//    public static String imageDownloadUrl = null;
+//
+//    public static String audioDownloadUrl = null;
+//
+//    public static String LOG_TAG = null;
+//
+//
+//    public static boolean imageFlag = false;
+//    public static boolean audioFlag = false;
 
-    public static String audioDownloadUrl = null;
-
-    public static String LOG_TAG = null;
-
-
-    public static boolean imageFlag = false;
-    public static boolean audioFlag = false;
-
-    public FireBaseHelper(Context context, FirebaseCallInterface firebaseCallInterface) {
+    public FireBaseHelper(Context context) {
         this.context = context;
-        this.firebaseCallInterface = firebaseCallInterface;
     }
 
 
     //query.orderByChild("date").startAt(new DateTime().getMillis())
 
-    public static FireBaseHelper getInstance(Context context, FirebaseCallInterface firebaseCallInterface) {
+    public static FireBaseHelper getInstance(Context context) {
 
         if (fireBaseHelper == null) {
-            return fireBaseHelper = new FireBaseHelper(context, firebaseCallInterface);
+            return fireBaseHelper = new FireBaseHelper(context);
         } else {
             return fireBaseHelper;
         }
@@ -168,48 +173,52 @@ public class FireBaseHelper {
     }
 
 
-    public static String getCurrentUserId() {
+    public String getCurrentUserId() {
         return mAuth.getCurrentUser().getUid();
     }
 
 
-    public static String getCurrentUserEmail() {
+    public String getCurrentUserEmail() {
         return mAuth.getCurrentUser().getEmail();
     }
 
 
-    public static int getChildCount(DatabaseReference mDatabaseReference, Context context) {
+    public void getChildCount(DatabaseReference mDatabaseReference,
+                              FireBaseChildCountCallInterface childTotalCountInterface) {
+
+        if (isNetworkAvailable(context) && mDatabaseReference != null
+                && childTotalCountInterface != null) {
 
 
-        if (isNetworkAvailable(context) && mDatabaseReference != null) {
+            this.childCountCallInterface = childTotalCountInterface;
 
             mDatabaseReference.addValueEventListener(new ValueEventListener() {
                 @Override
                 public void onDataChange(DataSnapshot dataSnapshot) {
 
                     childCount = Integer.valueOf((int) dataSnapshot.getChildrenCount());
+                    childCountCallInterface.onFirebaseCallComplete(childCount);
 
                 }
 
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
-
-
+                    childCountCallInterface.onFirebaseCallFailure(databaseError);
                 }
             });
         } else {
             Toast.makeText(context, "No Internet Connection.!", Toast.LENGTH_SHORT).show();
         }
 
-
-        return childCount;
     }
 
 
-    public void addValueEventListener(DatabaseReference mDatabaseRef, Context context) {
+    public void addValueEventListener(DatabaseReference mDatabaseRef, FirebaseCallInterface dataCallInterface) {
 
 
-        if (isNetworkAvailable(context) && mDatabaseRef != null) {
+        if (isNetworkAvailable(context) && mDatabaseRef != null && dataCallInterface != null) {
+
+            this.firebaseCallInterface = dataCallInterface;
 
             mDatabaseRef.addValueEventListener(new ValueEventListener() {
                 @Override
@@ -227,15 +236,25 @@ public class FireBaseHelper {
                 }
             });
         } else {
-            Toast.makeText(context, "No Internet Connection.!", Toast.LENGTH_SHORT).show();
-        }
+            if (context != null) {
+                Toast.makeText(this.context, "No Internet Connection.!", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this.context, "Unable To Detect Context.!", Toast.LENGTH_SHORT).show();
 
+            }
+
+        }
 
     }
 
-    public void addListenerForSingleValueEvent(DatabaseReference mDatabaseRef) {
+    public void addListenerForSingleValueEvent(DatabaseReference mDatabaseRef,
+                                               FirebaseCallInterface dataCallInterface) {
 
-        if (context != null && isNetworkAvailable(context) && mDatabaseRef != null) {
+
+        if (context != null && isNetworkAvailable(context) && mDatabaseRef != null &&
+                dataCallInterface != null) {
+
+            this.firebaseCallInterface = dataCallInterface;
 
             mDatabaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
                 @Override
@@ -266,8 +285,10 @@ public class FireBaseHelper {
     }
 
 
-    public String uploadImage(StorageReference filePath, Uri uri) {
+    public void uploadImage(StorageReference filePath, Uri uri, FirebaseUrlCallInterface urlCallInterface) {
 
+
+        this.firebaseUrlCallInterface = urlCallInterface;
 
         progressDialog.setMessage(context.getString(R.string.loading));
         progressDialog.show();
@@ -281,14 +302,18 @@ public class FireBaseHelper {
 
                 progressDialog.dismiss();
 
-                imageUrl = taskSnapshot.getDownloadUrl().toString();
+                String imageUrl = taskSnapshot.getDownloadUrl().toString();
 
+                firebaseUrlCallInterface.onFirebaseCallComplete(imageUrl);
 
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception exception) {
+
                 progressDialog.dismiss();
+                firebaseUrlCallInterface.onFirebaseCallFailure(exception);
+
                 //Toast.makeText(getApplicationContext(), exception.getMessage(), Toast.LENGTH_LONG).show();
             }
         }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
@@ -301,11 +326,14 @@ public class FireBaseHelper {
         });
 
 
-        return imageUrl;
+//        return imageUrl;
     }
 
 
-    public void uploadAudio(Uri uri, Context context) {
+    public void uploadAudio(Uri uri, StorageReference filePath, FirebaseUrlCallInterface urlAudioCallInterface) {
+
+
+        this.firebaseAudioUrlCallInterface = urlAudioCallInterface;
 
         progressDialog.setMessage(context.getString(R.string.loading));
         progressDialog.show();
@@ -318,21 +346,34 @@ public class FireBaseHelper {
 
         filePath = mFStorage.child("audio").child(getRandomId() + ".mp3");
 
-        // Uri uri = Uri.fromFile(new File(mFileName));
-
         filePath.putFile(galleryUri).addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
             @Override
             public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
 
                 progressDialog.dismiss();
+                String url = taskSnapshot.getDownloadUrl().toString();
+                firebaseAudioUrlCallInterface.onFirebaseCallComplete(url);
 
-                galleryUri = taskSnapshot.getDownloadUrl();
-
-                imageFlag = true;
-                ;
 
             }
+        }).addOnFailureListener(new OnFailureListener() {
+            @Override
+            public void onFailure(@NonNull Exception exception) {
+
+                progressDialog.dismiss();
+                firebaseAudioUrlCallInterface.onFirebaseCallFailure(exception);
+
+                //Toast.makeText(getApplicationContext(), exception.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        }).addOnProgressListener(new OnProgressListener<UploadTask.TaskSnapshot>() {
+            @Override
+            public void onProgress(UploadTask.TaskSnapshot taskSnapshot) {
+                //displaying the upload progress
+                double progress = (100.0 * taskSnapshot.getBytesTransferred()) / taskSnapshot.getTotalByteCount();
+                progressDialog.setMessage("Uploaded " + ((int) progress) + "%...");
+            }
         });
+
     }
 
 
@@ -358,7 +399,7 @@ public class FireBaseHelper {
                                     @Override
                                     public void onComplete(@NonNull Task<Void> task) {
                                         if (task.isSuccessful()) {
-                                            Log.d(LOG_TAG, "User account deleted.");
+                                            // Log.d(LOG_TAG, "User account deleted.");
                                         }
                                     }
                                 });
@@ -368,23 +409,36 @@ public class FireBaseHelper {
     }
 
 
-    public static void deleteUserAuthAccount(Context context) {
+    public void deleteUserAuthAccount(FireBaseOnTaskComplete onTaskComplete) {
 
-        Log.d(LOG_TAG, "deleteAccount");
+        // Log.d(LOG_TAG, "deleteAccount");
 
-        final FirebaseUser currentUser = mAuth.getInstance().getCurrentUser();
-        currentUser.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
-            @Override
-            public void onComplete(@NonNull Task<Void> task) {
-                if (task.isSuccessful()) {
-                    Log.d(LOG_TAG, "OK! Works fine!");
-                    // startActivity(new Intent(Main3WelcomeActivity.this, Main3Activity.class));
-                    //  finish();
-                } else {
-                    Log.w(LOG_TAG, "Something is wrong!");
+        if (onTaskComplete != null) {
+
+            this.onTaskCompleteInterface = onTaskComplete;
+
+
+            final FirebaseUser currentUser = mAuth.getInstance().getCurrentUser();
+            currentUser.delete().addOnCompleteListener(new OnCompleteListener<Void>() {
+                @Override
+                public void onComplete(@NonNull Task<Void> task) {
+
+                    onTaskCompleteInterface.onComplete(task);
+                    if (task.isSuccessful()) {
+
+
+                        // Log.d(LOG_TAG, "OK! Works fine!");
+                        // startActivity(new Intent(Main3WelcomeActivity.this, Main3Activity.class));
+                        //  finish();
+                    } else {
+                        //  Log.w(LOG_TAG, "Something is wrong!");
+                    }
                 }
-            }
-        });
+            });
+
+
+        }
+
     }
 
 

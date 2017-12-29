@@ -2,6 +2,7 @@ package inc.droidflick.firebasetutorial;
 
 import android.content.Context;
 import android.net.Uri;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -21,7 +22,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import inc.droidflick.firebasetutorial.adapter.MoviesAdapter;
+import inc.droidflick.firebasetutorial.interfaces.FireBaseChildCountCallInterface;
 import inc.droidflick.firebasetutorial.interfaces.FirebaseCallInterface;
+import inc.droidflick.firebasetutorial.interfaces.FirebaseUrlCallInterface;
 import inc.droidflick.firebasetutorial.model.Movie;
 import inc.droidflick.firebasetutorial.model.UserModel;
 import inc.droidflick.firebasetutorial.firebasenetwork.FireBaseHelper;
@@ -75,33 +78,95 @@ public class MainActivity extends AppCompatActivity {
         userKeyArrayList = new ArrayList<>();
 
 
-        loadMoviesData();
+        //Single Time Call
+        loadSingleValueEventData();
+
+        //Call on every Event Triggered.!
+        loadValueEventListenerData();
+
+        // Child Count
+        getChildCount();
+
+        prepareMovieData(); //dummy data
+
+        implementScrollListener();  // infinite scroll listener.!
 
 
-         prepareMovieData(); //dummy data
+        uploadImageFirebase(filePath, uri, firebaseImageUrlCall);
 
-         implementScrollListener();  // infinite scroll listener.!
-
-        // filePath = mFStorage.child("image").child(FireBaseHelper.getRandomId() + ".png");
-
-
-        //FireBaseHelper.getInstance(context, firebaseCallInterface).uploadImage(filePath, uri);
-
+        uploadAudioFirebase(filePath, uri, firebaseAudioUrlCall);
 
     }
 
-    private void loadMoviesData() {
+    private void getChildCount() {
 
         databaseReference = FireBaseHelper.getDataBaseRefrence();
         databaseReference.child("movies");
 
-        FireBaseHelper.getInstance(context, firebaseLoadMoviesInterface)
-                .addListenerForSingleValueEvent(databaseReference);
-
-        String loading = getResources().getString(R.string.loading);
-        FireBaseHelper.showDialog(context, loading);
+        FireBaseHelper.getInstance(context)
+                .getChildCount(databaseReference, childCountCallInterface);
 
     }
+
+    FireBaseChildCountCallInterface childCountCallInterface = new FireBaseChildCountCallInterface() {
+        @Override
+        public void onFirebaseCallComplete(int childCount) {
+
+            Toast.makeText(context, "Child Count :" + childCount, Toast.LENGTH_SHORT).show();
+
+        }
+
+        @Override
+        public void onFirebaseCallFailure(DatabaseError databaseError) {
+
+
+        }
+    };
+
+
+    private void uploadImageFirebase(StorageReference filePath, Uri uri, FirebaseUrlCallInterface firebaseUrlForImageCall) {
+
+        filePath = mFStorage.child("image").child(FireBaseHelper.getRandomId() + ".png");
+
+
+        FireBaseHelper.getInstance(context).uploadImage(filePath, uri, firebaseUrlForImageCall);
+
+    }
+
+    FirebaseUrlCallInterface firebaseImageUrlCall = new FirebaseUrlCallInterface() {
+        @Override
+        public void onFirebaseCallComplete(String url) {
+
+        }
+
+        @Override
+        public void onFirebaseCallFailure(@NonNull Exception exception) {
+
+        }
+    };
+
+
+    private void uploadAudioFirebase(StorageReference filePath, Uri uri, FirebaseUrlCallInterface firebaseUrlForImageCall) {
+
+        filePath = mFStorage.child("image").child(FireBaseHelper.getRandomId() + ".mp3");
+
+
+        FireBaseHelper.getInstance(context).uploadAudio(uri, filePath, firebaseUrlForImageCall);
+
+    }
+
+    FirebaseUrlCallInterface firebaseAudioUrlCall = new FirebaseUrlCallInterface() {
+        @Override
+        public void onFirebaseCallComplete(String url) {
+
+        }
+
+        @Override
+        public void onFirebaseCallFailure(@NonNull Exception exception) {
+
+        }
+    };
+
 
     private void initRecycleViewUi() {
 
@@ -117,8 +182,59 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    private void loadSingleValueEventData() {
 
-    FirebaseCallInterface firebaseLoadMoviesInterface = new FirebaseCallInterface() {
+        databaseReference = FireBaseHelper.getDataBaseRefrence();
+        databaseReference.child("movies");
+
+        FireBaseHelper.getInstance(context)
+                .addListenerForSingleValueEvent(databaseReference, firebaseSingleValueEventDataInterface);
+
+//        String loading = getResources().getString(R.string.loading);
+//        FireBaseHelper.showDialog(context, loading);
+
+    }
+
+    private void loadValueEventListenerData() {
+
+        databaseReference = FireBaseHelper.getDataBaseRefrence();
+        databaseReference.child("movies");
+
+        FireBaseHelper.getInstance(context)
+                .addValueEventListener(databaseReference, firebaseValueEventListenerInterface);
+
+        String loading = getResources().getString(R.string.loading);
+        FireBaseHelper.showDialog(context, loading);
+
+    }
+
+    FirebaseCallInterface firebaseValueEventListenerInterface = new FirebaseCallInterface() {
+        @Override
+        public void onFirebaseCallComplete(DataSnapshot dataSnapshot) {
+
+            FireBaseHelper.dismissDialog();
+
+
+            movieList = FireBaseHelper.readSnapShot(dataSnapshot, Movie.class);
+            mAdapter = new MoviesAdapter(movieList);
+            recyclerView.setAdapter(mAdapter);
+
+//              userKeyArrayList = FireBaseHelper.readSnapShot(dataSnapshot, String.class);
+//              userModelArrayList = FireBaseHelper.readSnapShot(dataSnapshot, UserModel.class);
+//              updateUi(userKeyArrayList);
+
+        }
+
+        @Override
+        public void onFirebaseCallFailure(DatabaseError databaseError) {
+
+            FireBaseHelper.dismissDialog();
+
+        }
+    };
+
+
+    FirebaseCallInterface firebaseSingleValueEventDataInterface = new FirebaseCallInterface() {
         @Override
         public void onFirebaseCallComplete(DataSnapshot dataSnapshot) {
 
