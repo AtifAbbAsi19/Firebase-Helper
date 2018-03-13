@@ -1,90 +1,86 @@
 # Add Firebase to your app
 
-One Paragraph of project description goes here
+Firebase is a mobile-backend-as-a-service that provides several features for building powerful mobile apps. Firebase has three core services: a realtime database, user authentication and hosting.
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
-
 ### Prerequisites
 
-*  - A device running Android 4.0 (Ice Cream Sandwich) or newer, and Google Play services 11.8.0 or higher
+* A device running Android 4.0 (Ice Cream Sandwich) or newer, and Google Play services 11.8.0 or higher
 * [Android Studio](https://developer.android.com/studio/index.html) - The latest version of Android Studio
 
-What things you need to install the software and how to install them
-
-```
-Give examples
-```
 
 ### Installing
 
 If you're using Android Studio version 2.2 or later, the Firebase Assistant is the simplest way to connect your app to Firebase. The Assistant can connect your existing project or create a new one for you with all the necessary gradle dependencies.
 
-Say what the step will be
+### Add the SDK
+
+If you would like to integrate the Firebase libraries into one of your own projects, you need to perform a few basic tasks to prepare your Android Studio project. You may have already done this as part of adding Firebase to your app.
+
+First, add rules to your root-level build.gradle file, to include the google-services plugin and the Google's Maven repository:
 
 ```
-Give the example
-```
+buildscript {
+    // ...
+    dependencies {
+        // ...
+        classpath 'com.google.gms:google-services:3.2.0' // google-services plugin
+    }
+}
 
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
+allprojects {
+    // ...
+    repositories {
+        // ...
+        maven {
+            url "https://maven.google.com" // Google's Maven repository
+        }
+    }
+}
 
 ```
-Give an example
+Then, in your module Gradle file (usually the app/build.gradle), add the apply plugin line at the bottom of the file to enable the Gradle plugin:
+
+```
+apply plugin: 'com.android.application'
+
+android {
+  // ...
+}
+
+dependencies {
+  // ...
+  compile 'com.google.firebase:firebase-core:11.8.0'
+  
+  // Getting a "Could not find" error? Make sure you have
+  // added the Google maven respository to your root build.gradle
+}
+
+// ADD THIS AT THE BOTTOM
+apply plugin: 'com.google.gms.google-services'
 ```
 
-## Deployment
 
-Add additional notes about how to deploy this on a live system
-
-## Built With
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
-
-## Contributing
-
-Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
-
-## Versioning
-
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/your/project/tags). 
 
 ## Authors
 
-* **Billie Thompson** - *Initial work* - [PurpleBooth](https://github.com/PurpleBooth)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+* **Muhammad Atif** - *Initial work* - [Muhammad Atif](https://github.com/atifabbasi19)
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+```
+Copyright 2018 Muhammad Atif
 
-## Acknowledgments
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-* Hat tip to anyone who's code was used
-* Inspiration
-* etc
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
