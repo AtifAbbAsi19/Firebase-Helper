@@ -1,4 +1,4 @@
-package inc.droidflick.firebasetutorial.Recycle_view;
+package inc.droidflick.firebasetutorial.recycle_view;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;

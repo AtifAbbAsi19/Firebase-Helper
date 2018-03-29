@@ -1,4 +1,4 @@
-package inc.droidflick.firebasetutorial.Recycle_view;
+package inc.droidflick.firebasetutorial.recycle_view;
 
 /**
  * Created by enchor25 on 2/24/2017.
