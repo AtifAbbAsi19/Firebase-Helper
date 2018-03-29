@@ -37,12 +37,9 @@ public class FirebaseAnalyticsHelper {
 
 
     public void addLogEvents(String eventType, Bundle params) {
-
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
         mFirebaseAnalytics.logEvent(eventType, params);
 
-//        FirebaseAnalytics analytics = FirebaseAnalytics.getInstance(context);
-//        analytics.logEvent(eventType, params);
 
     }
 
