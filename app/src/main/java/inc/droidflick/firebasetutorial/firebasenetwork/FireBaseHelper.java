@@ -14,8 +14,10 @@ import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthCredential;
+import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.EmailAuthProvider;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthUserCollisionException;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -37,6 +39,7 @@ import inc.droidflick.firebasetutorial.interfaces.FirebaseCallInterface;
 import inc.droidflick.firebasetutorial.interfaces.FirebaseUrlCallInterface;
 
 import java.util.*;
+import java.util.concurrent.Executor;
 
 /**
  * Created by Atif Arif on 12/18/2017.
@@ -46,6 +49,8 @@ public class FireBaseHelper {
 
 
     Context context;
+
+
     FirebaseCallInterface firebaseCallInterface;
     FireBaseChildCountCallInterface childCountCallInterface;
     FirebaseUrlCallInterface firebaseUrlCallInterface;
@@ -170,6 +175,68 @@ public class FireBaseHelper {
 
         String id = UUID.randomUUID().toString();
         return id;
+    }
+
+
+    private void registerUser(final String email, String password) {
+
+
+//            if (TextUtils.isEmpty(phone_number)) {
+//                Toast.makeText(this, "Please enter Number", Toast.LENGTH_LONG).show();
+//                return;
+//            }
+
+
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+
+        //if the email and password are not empty
+        //displaying a progress dialog
+
+//        progressDialog.setMessage("Registering Please Wait...");
+//        progressDialog.show();
+
+///http://stackoverflow.com/questions/40404567/how-to-send-verification-email-with-firebase
+
+        //creating a new user
+        firebaseAuth.createUserWithEmailAndPassword(email, password)
+                .addOnCompleteListener((Executor) this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        //checking if success
+                        if (task.isSuccessful()) {
+                            //display some message here
+//                            if (type.equalsIgnoreCase("dealer")) {
+//
+
+                            String userId = task.getResult().getUser().getUid();
+
+//                            FireBaseHelper.dismissDialog();
+//                            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+//                            intent.putExtra("Type", TypeSpinnerStr);
+//                            startActivity(intent);
+
+//https://firebase.googleblog.com/2017/02/email-verification-in-firebase-auth.html
+
+                            //  startActivity(new Intent(Signup_Activity.this, MainHomeDashBoard.class));
+//                            Toast.makeText(getApplicationContext(), "Successfully registered", Toast.LENGTH_LONG).show();
+                        } else {
+
+
+                            if (task.getException() instanceof FirebaseAuthUserCollisionException) {
+//                                Toast.makeText(Signup.this, "User with this email already exist.", Toast.LENGTH_SHORT).show();
+                            }
+//
+//                            Toast.makeText(Signup.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+//
+//                            FireBaseHelper.deleteUserAuthAccount(Signup.this);
+//                            FireBaseHelper.dismissDialog();
+//                            //display some message here
+//                            Toast.makeText(getApplicationContext(), "Registration Error", Toast.LENGTH_LONG).show();
+                        }
+//                        progressDialog.dismiss();
+                    }
+                });
+
     }
 
 
