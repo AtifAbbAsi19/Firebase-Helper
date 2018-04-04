@@ -178,7 +178,7 @@ public class FireBaseHelper {
     }
 
 
-    private void registerUser(final String email, String password) {
+    private void registerUser(final String email, String password,Context context) {
 
 
 //            if (TextUtils.isEmpty(phone_number)) {
@@ -197,22 +197,24 @@ public class FireBaseHelper {
 
 ///http://stackoverflow.com/questions/40404567/how-to-send-verification-email-with-firebase
 
+
+//         .addOnCompleteListener((Activity) context, new OnCompleteListener<AuthResult>() {
+//         .addOnCompleteListener((Executor) this, new OnCompleteListener<AuthResult>() {
+
+
         //creating a new user
         firebaseAuth.createUserWithEmailAndPassword(email, password)
-                .addOnCompleteListener((Executor) this, new OnCompleteListener<AuthResult>() {
+                .addOnCompleteListener((Activity) context, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         //checking if success
                         if (task.isSuccessful()) {
                             //display some message here
-//                            if (type.equalsIgnoreCase("dealer")) {
-//
 
                             String userId = task.getResult().getUser().getUid();
 
-//                            FireBaseHelper.dismissDialog();
+
 //                            Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
-//                            intent.putExtra("Type", TypeSpinnerStr);
 //                            startActivity(intent);
 
 //https://firebase.googleblog.com/2017/02/email-verification-in-firebase-auth.html
@@ -226,10 +228,7 @@ public class FireBaseHelper {
 //                                Toast.makeText(Signup.this, "User with this email already exist.", Toast.LENGTH_SHORT).show();
                             }
 //
-//                            Toast.makeText(Signup.this, task.getException().getMessage(), Toast.LENGTH_SHORT).show();
-//
-//                            FireBaseHelper.deleteUserAuthAccount(Signup.this);
-//                            FireBaseHelper.dismissDialog();
+
 //                            //display some message here
 //                            Toast.makeText(getApplicationContext(), "Registration Error", Toast.LENGTH_LONG).show();
                         }
@@ -238,6 +237,63 @@ public class FireBaseHelper {
                 });
 
     }
+
+
+    //method for user login
+    private void userLogin(String email,String password,Context context) {
+
+
+
+        //if the email and password are not empty
+        //displaying a progress dialog
+
+        progressDialog.setMessage("Logging in  Please Wait...");
+        progressDialog.show();
+
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        //logging in the user
+        firebaseAuth.signInWithEmailAndPassword(email, password)
+                .addOnCompleteListener((Activity) context, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+
+                        //if the task is successfull
+                        if (task.isSuccessful()) {
+                            //start the profile activity
+
+                            //Check in user Node that whether data exists or not
+                            //if exists then login else show Snakbar data does not exist
+
+//                            mAuthUserStr = mAuth.getCurrentUser().getUid();
+//                            mEmail = mAuth.getCurrentUser().getEmail();
+
+//                            AddEventFireBaseListner(mAuthUserStr, TypeSpinnerStr);
+
+                            //  startActivity(new Intent(getApplicationContext(), MainHomeDashBoard.class));
+                        } else {
+
+//                            Snackbar snackbar = Snackbar
+//                                    .make(coordinatorLayout, "Invalid user", Snackbar.LENGTH_LONG)
+//                                    .setAction("HIDE", new View.OnClickListener() {
+//                                        @Override
+//                                        public void onClick(View view) {
+//
+//
+//                                        }
+//                                    });
+//                            snackbar.show();
+
+
+                            progressDialog.dismiss();
+
+
+                        }
+                    }
+
+
+                });
+
+    }//end of user login
 
 
     public String getCurrentUserId() {
